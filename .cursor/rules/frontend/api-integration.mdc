@@ -1,6 +1,6 @@
 ---
 description: Frontend API Integration Patterns
-globs: ["frontend/services/**/*.ts", "frontend/components/**/*.tsx"]
+globs: ["services/**/*.ts", "components/**/*.tsx"]
 alwaysApply: false
 ---
 

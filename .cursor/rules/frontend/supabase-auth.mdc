@@ -1,6 +1,6 @@
 ---
 description: Supabase Authentication Patterns for Frontend
-globs: ["frontend/components/auth/**/*.tsx", "frontend/services/supabase.ts", "frontend/app/auth/**/*.tsx"]
+globs: ["components/auth/**/*.tsx", "services/supabase.ts", "app/auth/**/*.tsx"]
 alwaysApply: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Next.js Frontend Development Standards and Patterns
-globs: ["frontend/**/*.tsx", "frontend/**/*.ts"]
+globs: ["**/*.tsx", "**/*.ts"]
 alwaysApply: false
 ---
 
