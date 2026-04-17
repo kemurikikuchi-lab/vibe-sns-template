@@ -1,129 +1,45 @@
-# Vibe Coding Template - Agent Instructions
+# AGENTS.md — vibe-sns-template
 
-This is a modern full-stack application template with Next.js frontend and Python FastAPI backend, integrated with Supabase for authentication, database, and storage.
+## このプロジェクトは何か
+Vibe Coding Bootcamp 受講者用のテンプレート。カメラ連携 SNS を AI に指示して構築する。
+受講者は非エンジニア（営業・企画・マーケなど）。コードの説明は日本語でシンプルに。
 
-## Architecture Overview
+## 技術スタック
+- Next.js 14（App Router）
+- React 18
+- TypeScript
+- Tailwind CSS + shadcn/ui
+- Supabase（@supabase/ssr + @supabase/supabase-js）
+- react-webcam（カメラ連携）
 
-- **Backend**: Python FastAPI with Supabase integration
-- **Frontend**: Next.js with Tailwind CSS and TypeScript
-- **Database**: Supabase PostgreSQL with migrations
-- **Vector DB**: Qdrant for semantic search
-- **LLM Integration**: OpenAI and Anthropic support
+## 今の実装状態
+- ✅ Supabase Auth ログイン UI（app/login/page.tsx）
+- ✅ react-webcam カメラ起動・プレビュー（components/CameraCapture.tsx）
+- ✅ 空のタイムライン UI（「まだ投稿がありません」+ 「撮影へ」ボタン）
+- ❌ 写真アップロード（Supabase Storage）
+- ❌ posts テーブル・RLS ポリシー
+- ❌ タイムライン表示（データ取得）
+- ❌ フォロー機能・Realtime
 
-## Development Standards
+## 絶対に守ること（AI が拡張するとき）
+1. コード変更前に必ず GitHub Issue を作成し、Plan モードで計画を提示してから実装する
+2. Supabase クライアントは lib/supabase/client.ts（ブラウザ）か lib/supabase/server.ts（サーバー）を使う
+3. Route Handler に統一する（Server Actions と混在させない）
+4. Supabase Storage のみ使う（ローカルへの画像書き込み禁止）
 
-### Code Style
-- Use TypeScript for all frontend files
-- Use Python type hints for all backend functions
-- Follow async/await patterns consistently
-- Use snake_case for Python, camelCase for TypeScript
-- Include proper error handling in all functions
+## 拡張時の参照元
+- カメラ: `components/CameraCapture.tsx`
+- 認証: `app/login/page.tsx`
+- ブラウザ用 Supabase: `lib/supabase/client.ts`
+- サーバー用 Supabase: `lib/supabase/server.ts`
+- UI コンポーネント: `components/ui/`（shadcn/ui）
 
-### Architecture Patterns
-- Follow the service layer pattern for external integrations
-- Use Pydantic models for API request/response validation
-- Implement proper authentication on all protected endpoints
-- Use the generic SupabaseDatabaseService for database operations
-- Abstract LLM providers through service classes
+## データモデル（今後追加）
+- posts: id, user_id, image_url, caption, created_at
+- follows: follower_id, following_id, created_at
+- profiles: id（= auth.users.id）, display_name, avatar_url
 
-### File Organization
-- Backend: `backend/app/` with api/, models/, services/ subdirectories
-- Frontend: `frontend/` with app/, components/, services/ subdirectories
-- Database: `supabase/migrations/` for all schema changes
-- Rules: `.cursor/rules/` for detailed development guidelines
-
-## Common Patterns
-
-### FastAPI Endpoints
-```python
-@router.post("/items", response_model=ItemResponse)
-async def create_item(
-    request: CreateItemRequest,
-    current_user: User = Depends(get_current_user)
-) -> ItemResponse:
-    try:
-        # Use service layer
-        service = SupabaseDatabaseService("items", ItemResponse)
-        result = await service.create({**request.dict(), "user_id": current_user.id})
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-```
-
-### React Components
-```tsx
-'use client'
-export default function ComponentName({ title, onAction }: Props) {
-  const [loading, setLoading] = useState(false)
-
-  const handleAction = async () => {
-    try {
-      setLoading(true)
-      await onAction?.()
-    } catch (error) {
-      console.error('Action failed:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="p-4 rounded-lg border">
-      {/* Component content */}
-    </div>
-  )
-}
-```
-
-### Database Migrations
-```sql
--- Create table with RLS
-CREATE TABLE public.items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can manage own items"
-  ON public.items
-  USING (auth.uid() = user_id);
-```
-
-## Development Workflow
-
-1. **Setup**: Run `./first-time.sh` for initial configuration
-2. **Development**: Use `make dev` to start all services
-3. **Database**: Use `make db-migration-new name=description` for schema changes
-4. **Testing**: Visit http://localhost:8000/docs for API testing
-5. **Frontend**: Visit http://localhost:3000 for the application
-
-## Key Services
-
-- **SupabaseDatabaseService**: Generic CRUD operations
-- **SupabaseAuthService**: User authentication and token management
-- **SupabaseStorageService**: File upload and management
-- **LLMService**: Text generation with OpenAI/Anthropic
-- **EmbeddingService**: Vector embeddings for semantic search
-- **QdrantService**: Vector database operations
-
-## Environment Configuration
-
-Required environment variables:
-- `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` (required)
-- `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` (for LLM features)
-- `QDRANT_URL` and `QDRANT_API_KEY` (for vector database)
-
-## Best Practices
-
-- Always use the service layer for external API calls
-- Implement proper error handling with descriptive messages
-- Use authentication dependencies on protected endpoints
-- Follow the established patterns for consistency
-- Test API endpoints using the FastAPI docs interface
-- Use database migrations for all schema changes
-- Implement proper RLS policies for data security
-
-When adding new features, follow the established patterns and maintain consistency with the existing codebase structure.
+## 禁止事項
+- React 19 や Next.js 15 へアップグレードしない（受講者の環境との互換性を維持）
+- useState でグローバルな認証状態を管理しない（Supabase Auth のセッションを使う）
+- 画像ファイルをローカルストレージに保存しない（Supabase Storage に保存）
